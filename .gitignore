@@ -1,0 +1,84 @@
+# ==================================================
+# Python
+# ==================================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# ==================================================
+# Jupyter
+# ==================================================
+
+.ipynb_checkpoints/
+
+# ==================================================
+# Environment variables
+# ==================================================
+
+.env
+.env.*
+
+# ==================================================
+# Operating system
+# ==================================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==================================================
+# IDE
+# ==================================================
+
+.vscode/
+.idea/
+
+# ==================================================
+# Logs
+# ==================================================
+
+*.log
+
+# ==================================================
+# Temporary files
+# ==================================================
+
+*.tmp
+*.temp
+
+# ==================================================
+# Project generated results
+# ==================================================
+
+results/figures/*
+results/tables/*
+results/benchmarks/*
+
+# Keep directory structure
+!results/figures/.gitkeep
+!results/tables/.gitkeep
+!results/benchmarks/.gitkeep
+
+# ==================================================
+# Data
+# ==================================================
+
+# Raw and processed datasets may be large or restricted.
+# Do not upload them automatically.
+data/raw/*
+data/processed/*
+
+# Synthetic data can be versioned later if appropriate.
+# data/synthetic/*
