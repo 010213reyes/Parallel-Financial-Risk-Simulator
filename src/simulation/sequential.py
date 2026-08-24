@@ -1,4 +1,4 @@
-"""Simulación Monte Carlo secuencial."""
+"""Implementación secuencial de simulaciones Monte Carlo."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ class SimulationConfig:
 
     Attributes:
         scenarios: Número de escenarios.
-        horizon: Número de períodos por escenario.
+        horizon: Número de periodos simulados.
         initial_value: Valor inicial de la inversión.
         seed: Semilla para reproducibilidad.
     """
@@ -23,7 +23,7 @@ class SimulationConfig:
     scenarios: int
     horizon: int
     initial_value: float
-    seed: int = 42
+    seed: int | None = None
 
     def __post_init__(self) -> None:
         """Valida los parámetros de configuración."""
@@ -43,64 +43,92 @@ class SimulationConfig:
             )
 
 
-@dataclass(frozen=True)
-class SimulationResult:
-    """Resultados producidos por una simulación.
-
-    Attributes:
-        returns: Rendimientos simulados.
-        prices: Trayectorias de precios.
-    """
-
-    returns: np.ndarray
-    prices: np.ndarray
-
-
 def simulate_sequential(
     model: NormalReturnModel,
     config: SimulationConfig,
-) -> SimulationResult:
+) -> np.ndarray:
     """Ejecuta una simulación Monte Carlo secuencial.
 
-    Cada escenario se genera de manera independiente utilizando
-    un único proceso de ejecución.
+    Cada escenario se genera independientemente de los demás.
 
     Args:
-        model: Modelo utilizado para generar rendimientos.
+        model: Modelo estadístico de los rendimientos.
         config: Configuración de la simulación.
 
     Returns:
-        Resultados de la simulación.
+        Matriz con forma:
+
+        (scenarios, horizon + 1)
+
+        La primera columna contiene el valor inicial.
     """
     rng = np.random.default_rng(config.seed)
 
-    returns = np.empty(
+    simulations = np.empty(
         (
             config.scenarios,
-            config.horizon,
+            config.horizon + 1,
         ),
         dtype=np.float64,
     )
 
-    prices = np.empty_like(returns)
+    simulations[:, 0] = config.initial_value
 
     for scenario_index in range(config.scenarios):
-        scenario_returns = model.generate_returns(
+
+        returns = model.generate_returns(
             rng=rng,
             size=config.horizon,
         )
 
-        scenario_prices = (
+        cumulative_returns = np.cumsum(
+            returns
+        )
+
+        simulations[scenario_index, 1:] = (
+            config.initial_value
+            * np.exp(cumulative_returns)
+        )
+
+    return simulations
+
+
+def simulate_sequential_final_values(
+    model: NormalReturnModel,
+    config: SimulationConfig,
+) -> np.ndarray:
+    """Simula escenarios conservando únicamente el valor final.
+
+    Esta función se utilizará principalmente para benchmarks,
+    ya que evita almacenar todas las trayectorias.
+
+    Args:
+        model: Modelo estadístico de los rendimientos.
+        config: Configuración de la simulación.
+
+    Returns:
+        Valor final de cada escenario.
+    """
+    rng = np.random.default_rng(config.seed)
+
+    final_values = np.empty(
+        config.scenarios,
+        dtype=np.float64,
+    )
+
+    for scenario_index in range(
+        config.scenarios
+    ):
+        returns = model.generate_returns(
+            rng=rng,
+            size=config.horizon,
+        )
+
+        final_values[scenario_index] = (
             config.initial_value
             * np.exp(
-                np.cumsum(scenario_returns)
+                np.sum(returns)
             )
         )
 
-        returns[scenario_index] = scenario_returns
-        prices[scenario_index] = scenario_prices
-
-    return SimulationResult(
-        returns=returns,
-        prices=prices,
-    )
+    return final_values
